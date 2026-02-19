@@ -1,7 +1,6 @@
 import { Navigation } from "@/components/navigation"
 import { Hero } from "@/components/hero"
 import { PortfolioGrid } from "@/components/portfolio-grid"
-import { LightroomSection } from "@/components/lightroom-section"
 import { FeaturedReel } from "@/components/featured-reel"
 import { AboutSection } from "@/components/about-section"
 import { ServicesSection } from "@/components/services-section"
@@ -13,7 +12,6 @@ export default function Page() {
       <Navigation />
       <Hero />
       <PortfolioGrid />
-      <LightroomSection />
       <FeaturedReel />
       <AboutSection />
       <ServicesSection />
