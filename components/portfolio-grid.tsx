@@ -2,69 +2,71 @@
 
 import Image from "next/image"
 import { useState } from "react"
-import { X } from "lucide-react"
+import { X, Camera } from "lucide-react"
+import useSWR from "swr"
+import type { PortfolioItem } from "@/lib/portfolio"
 
-const portfolioItems = [
-  {
-    src: "/images/portrait-1.jpg",
-    alt: "Moody cinematic portrait with golden window light",
-    category: "Portrait",
-    title: "Golden Hour",
-    span: "md:col-span-2 md:row-span-2",
-  },
-  {
-    src: "/images/landscape-1.jpg",
-    alt: "Dramatic ocean waves crashing against dark volcanic rocks",
-    category: "Landscape",
-    title: "Coastal Fury",
-    span: "md:col-span-1 md:row-span-1",
-  },
-  {
-    src: "/images/urban-1.jpg",
-    alt: "Cinematic night cityscape with neon reflections",
-    category: "Urban",
-    title: "Neon Nights",
-    span: "md:col-span-1 md:row-span-1",
-  },
-  {
-    src: "/images/nature-1.jpg",
-    alt: "Ethereal misty forest with sunbeams filtering through trees",
-    category: "Nature",
-    title: "Morning Mist",
-    span: "md:col-span-1 md:row-span-2",
-  },
-  {
-    src: "/images/wedding-1.jpg",
-    alt: "Elegant couple silhouette against warm sunset light",
-    category: "Wedding",
-    title: "Eternal Light",
-    span: "md:col-span-1 md:row-span-1",
-  },
-  {
-    src: "/images/architecture-1.jpg",
-    alt: "Dramatic minimalist architecture with strong geometric lines",
-    category: "Architecture",
-    title: "Structure",
-    span: "md:col-span-1 md:row-span-1",
-  },
-  {
-    src: "/images/detail-1.jpg",
-    alt: "Macro close-up of water droplets on a dark leaf",
-    category: "Detail",
-    title: "Clarity",
-    span: "md:col-span-2 md:row-span-1",
-  },
-]
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-const categories = ["All", "Portrait", "Landscape", "Urban", "Nature", "Wedding", "Architecture", "Detail"]
+function PortfolioSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:auto-rows-[280px]">
+      {[
+        "md:col-span-2 md:row-span-2",
+        "md:col-span-1 md:row-span-1",
+        "md:col-span-1 md:row-span-1",
+        "md:col-span-1 md:row-span-2",
+        "md:col-span-1 md:row-span-1",
+        "md:col-span-1 md:row-span-1",
+      ].map((span, i) => (
+        <div
+          key={i}
+          className={`${span} animate-pulse bg-secondary`}
+        />
+      ))}
+    </div>
+  )
+}
+
+function PortfolioEmpty() {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <div className="flex h-16 w-16 items-center justify-center border border-border">
+        <Camera className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="mt-6 font-serif text-xl text-foreground">
+        No work uploaded yet
+      </p>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+        Portfolio images will appear here once added through the admin panel.
+      </p>
+    </div>
+  )
+}
 
 export function PortfolioGrid() {
-  const [activeCategory, setActiveCategory] = useState("All")
-  const [lightboxImage, setLightboxImage] = useState<typeof portfolioItems[0] | null>(null)
+  const { data, isLoading } = useSWR<{ items: PortfolioItem[] }>(
+    "/api/portfolio",
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 30000,
+    }
+  )
 
-  const filtered = activeCategory === "All"
-    ? portfolioItems
-    : portfolioItems.filter((item) => item.category === activeCategory)
+  const portfolioItems = data?.items ?? []
+  const categories = [
+    "All",
+    ...Array.from(new Set(portfolioItems.map((item) => item.category))),
+  ]
+
+  const [activeCategory, setActiveCategory] = useState("All")
+  const [lightboxImage, setLightboxImage] = useState<PortfolioItem | null>(null)
+
+  const filtered =
+    activeCategory === "All"
+      ? portfolioItems
+      : portfolioItems.filter((item) => item.category === activeCategory)
 
   return (
     <section id="work" className="px-6 py-24 lg:px-12">
@@ -79,51 +81,62 @@ export function PortfolioGrid() {
           </h2>
         </div>
 
-        {/* Category filter */}
-        <div className="mb-12 flex flex-wrap gap-3">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 text-xs uppercase tracking-widest transition-all duration-300 border ${
-                activeCategory === cat
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {/* Loading state */}
+        {isLoading && <PortfolioSkeleton />}
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:auto-rows-[280px]">
-          {filtered.map((item) => (
-            <button
-              key={item.title}
-              className={`group relative overflow-hidden ${item.span} cursor-pointer`}
-              onClick={() => setLightboxImage(item)}
-              aria-label={`View ${item.title}`}
-            >
-              <Image
-                src={item.src}
-                alt={item.alt}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-background/0 transition-all duration-500 group-hover:bg-background/50" />
-              <div className="absolute inset-0 flex flex-col justify-end p-6 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                <span className="text-xs uppercase tracking-[0.2em] text-primary">
-                  {item.category}
-                </span>
-                <span className="mt-1 font-serif text-xl text-foreground">
-                  {item.title}
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
+        {/* Empty state */}
+        {!isLoading && portfolioItems.length === 0 && <PortfolioEmpty />}
+
+        {/* Content */}
+        {!isLoading && portfolioItems.length > 0 && (
+          <>
+            {/* Category filter */}
+            <div className="mb-12 flex flex-wrap gap-3">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-4 py-2 text-xs uppercase tracking-widest transition-all duration-300 border ${
+                    activeCategory === cat
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Grid */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:auto-rows-[280px]">
+              {filtered.map((item) => (
+                <button
+                  key={item.id}
+                  className={`group relative overflow-hidden ${item.span} cursor-pointer`}
+                  onClick={() => setLightboxImage(item)}
+                  aria-label={`View ${item.title}`}
+                >
+                  <Image
+                    src={item.url}
+                    alt={item.alt}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-background/0 transition-all duration-500 group-hover:bg-background/50" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                    <span className="text-xs uppercase tracking-[0.2em] text-primary">
+                      {item.category}
+                    </span>
+                    <span className="mt-1 font-serif text-xl text-foreground">
+                      {item.title}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Lightbox */}
@@ -143,7 +156,7 @@ export function PortfolioGrid() {
           </button>
           <div className="relative max-h-[85vh] max-w-5xl w-full aspect-[3/2]">
             <Image
-              src={lightboxImage.src}
+              src={lightboxImage.url}
               alt={lightboxImage.alt}
               fill
               className="object-contain"
@@ -157,6 +170,11 @@ export function PortfolioGrid() {
             <p className="mt-1 font-serif text-lg text-foreground">
               {lightboxImage.title}
             </p>
+            {lightboxImage.description && (
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                {lightboxImage.description}
+              </p>
+            )}
           </div>
         </div>
       )}
