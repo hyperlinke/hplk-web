@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { head, list } from '@vercel/blob'
+import { get } from '@vercel/blob'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,35 +10,25 @@ export async function GET(request: Request) {
   }
 
   try {
-    // List blobs with the prefix to find the matching file
-    const { blobs } = await list({
-      prefix: `img/${filename}`,
+    const result = await get(`img/${filename}`, {
+      access: 'private',
       token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
-    if (blobs.length === 0) {
+    if (!result) {
       return new NextResponse('Not found', { status: 404 })
     }
 
-    const blob = blobs[0]
-
-    // Fetch the actual image data from the blob URL
-    const response = await fetch(blob.url)
-
-    if (!response.ok) {
-      return new NextResponse('Not found', { status: 404 })
-    }
-
-    const buffer = await response.arrayBuffer()
+    const buffer = await result.arrayBuffer()
 
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type': blob.contentType ?? 'image/jpeg',
+        'Content-Type': result.contentType ?? 'image/jpeg',
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     })
   } catch (error) {
-    console.error('Blob image fetch error:', error)
+    console.error('[v0] Blob image fetch error:', error)
     return new NextResponse('Not found', { status: 404 })
   }
 }
