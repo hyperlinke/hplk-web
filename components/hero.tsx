@@ -5,7 +5,7 @@ export function Hero() {
   return (
     <section className="relative h-screen w-full overflow-hidden">
       <Image
-        src="/images/hero.jpg"
+        src="/api/blob-image?pathname=HPL03460.jpg"
         alt="Cinematic landscape photograph showcasing dramatic mountain silhouette at golden hour"
         fill
         className="object-cover"

@@ -22,7 +22,7 @@ export function FeaturedReel() {
         {/* Cinematic banner image */}
         <div className="relative aspect-[21/9] w-full overflow-hidden">
           <Image
-            src="/images/hero.jpg"
+            src="/api/blob-image?pathname=C0002T01.jpg"
             alt="Cinematic showreel thumbnail featuring dramatic landscape"
             fill
             className="object-cover"

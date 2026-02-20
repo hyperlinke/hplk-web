@@ -8,7 +8,7 @@ export function AboutSection() {
           {/* Image */}
           <div className="relative aspect-[4/5] overflow-hidden">
             <Image
-              src="/images/portrait-1.jpg"
+              src="/api/blob-image?pathname=HPL03600.jpg"
               alt="Portrait of the photographer in studio environment"
               fill
               className="object-cover"
